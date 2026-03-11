@@ -42,3 +42,16 @@ bbox_as_instruction = false
 image_condition_lang_prefix = false
 pp_lower_half = false
 image_as_condition = false
+
+# ============================================
+# 仿真模式配置 (Simulation Mode)
+# ============================================
+# 启用仿真模式后，EFMNode 将连接到 GalaxeaManipSim
+# 而不是真机 ROS2 话题
+
+[simulation]
+enabled = false                    # 是否启用仿真模式
+env_name = "R1ProBlocksStackEasy-v0"  # Gym 环境名称
+use_random_policy = true           # 使用 pseudo random policy 测试
+random_seed = 42                   # 随机种子（可复现）
+headless = true                    # 无头模式（false=显示窗口）

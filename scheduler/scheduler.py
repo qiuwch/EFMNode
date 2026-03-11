@@ -144,9 +144,23 @@ class Scheduler:
         self.instruction_manager = InstructionManager(self.schedule_config["instruction"])
 
     def _setup_ros2_bridge(self):
-        # HACK: use_recv_time=True to use the received time from ROS2 messages
-        self.ros2_bridge = Ros2Bridge(self.schedule_config, self.model_config, use_recv_time=True)
-        self.ros2_bridge.register_subscription(String, 'hs/vlm_out2vla', self.instruction_manager._ehi_instruction_callback)
+        # 检查是否启用仿真模式
+        if self.schedule_config.get('simulation', {}).get('enabled', False):
+            from core.communication.sim_bridge import SimBridge
+            sim_config = self.schedule_config['simulation']
+            self.ros2_bridge = SimBridge(
+                self.schedule_config, 
+                self.model_config,
+                env_name=sim_config.get('env_name', 'R1ProBlocksStackEasy-v0'),
+                use_random_policy=sim_config.get('use_random_policy', False),
+                random_seed=sim_config.get('random_seed', 42),
+                headless=sim_config.get('headless', True),
+            )
+            logger.info("Simulation mode enabled")
+        else:
+            # HACK: use_recv_time=True to use the received time from ROS2 messages
+            self.ros2_bridge = Ros2Bridge(self.schedule_config, self.model_config, use_recv_time=True)
+            self.ros2_bridge.register_subscription(String, 'hs/vlm_out2vla', self.instruction_manager._ehi_instruction_callback)
         
         if self.step_mode == "async":
             self.ros2_bridge.register_publish_callback(self.step_freq, self._async_publish)
