@@ -13,6 +13,14 @@ enable_publish = [
     #"chassis",
 ]
 
+# ============================================
+# 运行模式配置 (Run Mode)
+# ============================================
+# 一键切换真机/仿真模式
+# mode = "real"    - 使用真机 (ROS2)
+# mode = "sim"     - 使用仿真 (GalaxeaManipSim)
+run_mode = "sim"
+
 
 [basic]
 use_ehi = false

@@ -144,10 +144,12 @@ class Scheduler:
         self.instruction_manager = InstructionManager(self.schedule_config["instruction"])
 
     def _setup_ros2_bridge(self):
-        # 检查是否启用仿真模式
-        if self.schedule_config.get('simulation', {}).get('enabled', False):
+        # 通过 run_mode 一键切换真机/仿真
+        run_mode = self.schedule_config.get('robot', {}).get('run_mode', 'real')
+        
+        if run_mode == "sim":
             from core.communication.sim_bridge import SimBridge
-            sim_config = self.schedule_config['simulation']
+            sim_config = self.schedule_config.get('simulation', {})
             self.ros2_bridge = SimBridge(
                 self.schedule_config, 
                 self.model_config,
@@ -156,11 +158,14 @@ class Scheduler:
                 random_seed=sim_config.get('random_seed', 42),
                 headless=sim_config.get('headless', True),
             )
-            logger.info("Simulation mode enabled")
-        else:
+            logger.info(f"🤖 Simulation mode enabled (env: {sim_config.get('env_name', 'R1ProBlocksStackEasy-v0')})")
+        elif run_mode == "real":
             # HACK: use_recv_time=True to use the received time from ROS2 messages
             self.ros2_bridge = Ros2Bridge(self.schedule_config, self.model_config, use_recv_time=True)
             self.ros2_bridge.register_subscription(String, 'hs/vlm_out2vla', self.instruction_manager._ehi_instruction_callback)
+            logger.info("🦾 Real robot mode enabled (ROS2)")
+        else:
+            raise ValueError(f"Invalid run_mode: {run_mode}. Use 'real' or 'sim'")
         
         if self.step_mode == "async":
             self.ros2_bridge.register_publish_callback(self.step_freq, self._async_publish)
